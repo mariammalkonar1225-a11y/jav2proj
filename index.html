@@ -1,0 +1,206 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brew & Byte Cafe</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header>
+    <h1>☕ Brew & Byte Cafe</h1>
+    <p>Your daily dose of happiness!</p>
+</header>
+
+<section class="welcome">
+    <p class="tagline">FRESHLY BREWED WITH LOVE</p>
+    <h2>Good Coffee. Good Mood.</h2>
+    <p>Fresh coffee, delicious snacks, and happy moments.</p>
+    <a href="#menu" class="explore">Explore Our Menu ↓</a>
+</section>
+
+<section id="menu" class="menu">
+    <p class="tagline">MADE FRESH FOR YOU</p>
+    <h2>Our Menu</h2>
+
+    <div class="menu-container">
+
+        <div class="menu-item">
+            <div class="food-icon">☕</div>
+            <h3>Coffee</h3>
+            <p>Freshly brewed coffee.</p>
+            <h4>Rs. 100</h4>
+            <button onclick="addItem('Coffee')">Add to Order</button>
+        </div>
+
+        <div class="menu-item">
+            <div class="food-icon">🥛</div>
+            <h3>Cappuccino</h3>
+            <p>Creamy coffee with milk foam.</p>
+            <h4>Rs. 150</h4>
+            <button onclick="addItem('Cappuccino')">Add to Order</button>
+        </div>
+
+        <div class="menu-item">
+            <div class="food-icon">🍵</div>
+            <h3>Tea</h3>
+            <p>A warm cup of tea.</p>
+            <h4>Rs. 50</h4>
+            <button onclick="addItem('Tea')">Add to Order</button>
+        </div>
+
+        <div class="menu-item">
+            <div class="food-icon">🥪</div>
+            <h3>Sandwich</h3>
+            <p>A tasty snack for your break.</p>
+            <h4>Rs. 120</h4>
+            <button onclick="addItem('Sandwich')">Add to Order</button>
+        </div>
+
+        <div class="menu-item">
+            <div class="food-icon">🍫</div>
+            <h3>Brownie</h3>
+            <p>A delicious chocolate treat.</p>
+            <h4>Rs. 80</h4>
+            <button onclick="addItem('Brownie')">Add to Order</button>
+        </div>
+
+    </div>
+</section>
+
+<section class="order-section" id="order">
+    <div class="order-box">
+        <p class="tagline">ALMOST THERE!</p>
+        <h2>Your Order</h2>
+
+        <ul id="cart">
+            <li>Your cart is empty.</li>
+        </ul>
+
+        <h3 id="total">Total: Rs. 0</h3>
+
+        <form id="orderForm">
+            <label for="customer">Your Name</label>
+            <input type="text" id="customer"
+                   placeholder="Enter your name" required>
+
+            <button type="submit" class="checkout">
+                Place My Order
+            </button>
+        </form>
+
+        <pre id="result"></pre>
+    </div>
+</section>
+
+<footer>
+    <h3>☕ Brew & Byte Cafe</h3>
+    <p>Good coffee. Great moments.</p>
+    <p>© 2026 Brew & Byte Cafe</p>
+</footer>
+
+<script>
+let cart = {};
+
+function getPrice(name) {
+    if (name === "Coffee") return 100;
+    if (name === "Cappuccino") return 150;
+    if (name === "Tea") return 50;
+    if (name === "Sandwich") return 120;
+    if (name === "Brownie") return 80;
+    return 0;
+}
+
+function addItem(name) {
+    if (cart[name]) {
+        cart[name] = cart[name] + 1;
+    } else {
+        cart[name] = 1;
+    }
+
+    showCart();
+}
+
+function showCart() {
+    let cartList = document.getElementById("cart");
+    let total = 0;
+
+    cartList.innerHTML = "";
+
+    for (let name in cart) {
+        let quantity = cart[name];
+        let amount = getPrice(name) * quantity;
+        total = total + amount;
+
+        let item = document.createElement("li");
+        item.textContent =
+            name + " x " + quantity + " = Rs. " + amount;
+
+        cartList.appendChild(item);
+    }
+
+    if (Object.keys(cart).length === 0) {
+        cartList.innerHTML = "<li>Your cart is empty.</li>";
+    }
+
+    document.getElementById("total").textContent =
+        "Total: Rs. " + total;
+}
+
+document.getElementById("orderForm").onsubmit =
+    async function(event) {
+
+        event.preventDefault();
+
+        if (Object.keys(cart).length === 0) {
+            alert("Please add an item to your order.");
+            return;
+        }
+
+        let customer =
+            document.getElementById("customer").value.trim();
+
+        let items = [];
+
+        for (let name in cart) {
+            items.push(name + ":" + cart[name]);
+        }
+
+        let data = new URLSearchParams();
+        data.append("customer", customer);
+        data.append("items", items.join(","));
+
+        let result = document.getElementById("result");
+        result.textContent = "Placing your order...";
+
+        try {
+            let response = await fetch("/order", {
+                method: "POST",
+                headers: {
+                    "Content-Type":
+                        "application/x-www-form-urlencoded"
+                },
+                body: data.toString()
+            });
+
+            let message = await response.text();
+            result.textContent = message;
+
+            if (response.ok) {
+                cart = {};
+                showCart();
+                document.getElementById("customer").value = "";
+            }
+        } catch (error) {
+            result.textContent =
+                "Unable to place order. Please try again.";
+        }
+    };
+
+showCart();
+</script>
+
+</body>
+</html>
